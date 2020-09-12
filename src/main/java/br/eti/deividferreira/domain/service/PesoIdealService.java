@@ -1,8 +1,9 @@
 package br.eti.deividferreira.domain.service;
 
-import br.eti.deividferreira.domain.entities.PesoIdeal;
-import br.eti.deividferreira.web.response.PesoIdealResponse;
+import br.eti.deividferreira.domain.entities.Individuo;
+import br.eti.deividferreira.web.request.PesoIdealRequest;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 public interface PesoIdealService {
@@ -12,21 +13,22 @@ public interface PesoIdealService {
      *
      * @return todos os calculos contendo todas as informações
      */
-    List<PesoIdeal> todos();
+    List<Individuo> todos();
 
     /**
      * salva o objeto no banco de dados
      *
-     * @param pesoIdeal
+     * @param request
      * @return o objeto salvo
      */
-    PesoIdealResponse salvar(PesoIdeal pesoIdeal);
+    @Transactional
+    Individuo salvar(PesoIdealRequest request);
 
     /**
      * busca um determinado registro por CPF
      * @param cpf
      * @return o PesoIdeal
      */
-    PesoIdeal buscarPor(String cpf);
+    Individuo buscarPor(String cpf);
 
 }

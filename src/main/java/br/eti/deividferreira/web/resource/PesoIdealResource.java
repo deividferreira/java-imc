@@ -1,7 +1,8 @@
 package br.eti.deividferreira.web.resource;
 
-import br.eti.deividferreira.domain.entities.PesoIdeal;
+import br.eti.deividferreira.domain.entities.Individuo;
 import br.eti.deividferreira.domain.service.PesoIdealService;
+import br.eti.deividferreira.web.request.PesoIdealRequest;
 import org.hibernate.validator.constraints.br.CPF;
 
 import javax.validation.Valid;
@@ -22,20 +23,19 @@ public class PesoIdealResource {
     }
 
     @GET
-    public List<PesoIdeal> todos() {
+    public List<Individuo> todos() {
         return this.pesoIdealService.todos();
     }
 
     @POST
-    public Response salvar(@Valid PesoIdeal pesoIdeal) {
-        return Response.ok(this.pesoIdealService.salvar(pesoIdeal))
+    public Response salvar(@Valid PesoIdealRequest request) {
+        return Response.ok(this.pesoIdealService.salvar(request))
                 .status(Response.Status.CREATED).build();
     }
 
     @GET
     @Path("{cpf}")
     public Response buscarPor(@PathParam("cpf") @CPF(message = "CPF Inválido") String cpf) {
-        System.out.println("Teste " + cpf);
         return Response.ok(this.pesoIdealService.buscarPor(cpf)).build();
     }
 

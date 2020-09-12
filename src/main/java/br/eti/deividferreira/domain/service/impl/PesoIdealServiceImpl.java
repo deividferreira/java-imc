@@ -1,40 +1,58 @@
 package br.eti.deividferreira.domain.service.impl;
 
-import br.eti.deividferreira.domain.entities.PesoIdeal;
+import br.eti.deividferreira.domain.entities.Imc;
+import br.eti.deividferreira.domain.entities.Individuo;
 import br.eti.deividferreira.domain.exception.RecursoNaoEncontradoException;
-import br.eti.deividferreira.domain.repository.PesoIdealRepository;
+import br.eti.deividferreira.domain.repository.ImcRepository;
+import br.eti.deividferreira.domain.repository.IndividuoRepository;
 import br.eti.deividferreira.domain.service.PesoIdealService;
-import br.eti.deividferreira.web.response.PesoIdealResponse;
+import br.eti.deividferreira.web.request.PesoIdealRequest;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @ApplicationScoped
 public class PesoIdealServiceImpl implements PesoIdealService {
 
-    private final PesoIdealRepository pesoIdealRepository;
+    private final IndividuoRepository individuoRepository;
+    private final ImcRepository imcRepository;
 
-    PesoIdealServiceImpl(PesoIdealRepository pesoIdealRepository) {
-        this.pesoIdealRepository = pesoIdealRepository;
+    PesoIdealServiceImpl(IndividuoRepository individuoRepository, ImcRepository imcRepository) {
+        this.individuoRepository = individuoRepository;
+        this.imcRepository = imcRepository;
     }
 
     @Override
-    public List<PesoIdeal> todos() {
-        return this.pesoIdealRepository.findAll();
+    public List<Individuo> todos() {
+        return this.individuoRepository.findAll();
     }
 
     @Override
-    public PesoIdealResponse salvar(PesoIdeal pesoIdeal) {
-        this.pesoIdealRepository.findByCpf(pesoIdeal.getCpf()).ifPresent(found -> {
-            throw new WebApplicationException("Já existe um registro com esse CPF", 400);
+    public Individuo salvar(PesoIdealRequest request) {
+        this.individuoRepository.findByCpf(request.getCpfSemMascara()).ifPresentOrElse(found -> {
+            var imc = request.toImc();
+            validarImc(imc, found);
+
+            this.imcRepository.save(imc);
+        }, () -> {
+            this.individuoRepository.save(request.toIndividuo());
         });
-        return PesoIdealResponse.build(this.pesoIdealRepository.save(pesoIdeal));
+
+        return this.individuoRepository.findByCpf(request.getCpfSemMascara()).get();
     }
 
     @Override
-    public PesoIdeal buscarPor(String cpf) {
-        return this.pesoIdealRepository.findByCpf(cpf).orElseThrow(
+    public Individuo buscarPor(String cpf) {
+        String cpfSemMascara = cpf.replace(".", "").replace("-", "");
+        return this.individuoRepository.findByCpf(cpfSemMascara).orElseThrow(
                 () -> new RecursoNaoEncontradoException("Nenhum IMC foi encontrado para este CPF"));
+    }
+
+    private void validarImc(Imc imc, Individuo individuo) {
+        this.imcRepository.findByPesoAndAlturaAndIndividuo(imc.getPeso(), imc.getAltura(), individuo).ifPresentOrElse(found -> {
+            throw new WebApplicationException("Você já possui um IMC para este peso e altura", Response.Status.BAD_REQUEST);
+        }, () ->  individuo.addImc(imc));
     }
 }
